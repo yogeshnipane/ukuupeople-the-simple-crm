@@ -50,15 +50,15 @@ function admin_tabs( $current=NULL ) {
     'googleapp' => __('Integrations', 'UkuuPeople' ),
     'licenses' => __('Licenses', 'UkuuPeople' ),
   );
-  if( is_null( $current ) ) {
-    if( isset( $_GET['page'] ) ) {
+  if ( is_null( $current ) ) {
+    if ( isset( $_GET['page'] ) ) {
       $current = $_GET['page'];
     }
   }
   $content = '';
   $content .= '<h2 class="nav-tab-wrapper">';
-  foreach( $tabs as $location => $tabname ){
-    if( $current == $location ){
+  foreach ( $tabs as $location => $tabname ){
+    if ( $current == $location ){
       $class = ' nav-tab-active';
     } else{
       $class = '';
@@ -103,7 +103,7 @@ function licenses() {
     'ukuugoogle_license'   => 'ukuupeople_google_license_key',
   );
   foreach ( $addonarr as $key => $value ) {
-    if( has_action( $key ) ) {
+    if ( has_action( $key ) ) {
       do_action( $key );
     }
   }
