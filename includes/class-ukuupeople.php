@@ -155,8 +155,9 @@ class UkuuPeople {
     // Filter Opportunities By Logged-In User
     // Switch Condition implements this join but for remaining conditions we need to implement this
     if ( isset( $_GET['post_type'] ) && $_GET['post_type'] == 'wp-type-contacts' && $user_info->ID > 1 ) {
-      if ( strpos( $pieces['join'], $wpdb->postmeta ) == false )
+      if ( strpos( $pieces['join'], $wpdb->postmeta ) == false ) {
         $pieces['join'] .= " INNER JOIN {$wpdb->postmeta} ON ( {$wpdb->posts}.ID = {$wpdb->postmeta}.post_id )";
+      }
 
       $pieces['where'] = " AND ( {$wpdb->postmeta}.meta_key = 'wpcf-email' ) AND {$wpdb->posts}.post_type = 'wp-type-contacts' AND ({$wpdb->posts}.post_status = 'publish' OR {$wpdb->posts}.post_status = 'future' OR {$wpdb->posts}.post_status = 'draft' OR {$wpdb->posts}.post_status = 'pending' OR {$wpdb->posts}.post_status = 'private' )";
 
