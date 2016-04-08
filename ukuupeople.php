@@ -84,6 +84,17 @@ function on_activation() {
   dbDelta( $sql );
   global $ukuupeople_db_version;
   update_option( "ukuupeople_db_version", $ukuupeople_db_version );
+  require_once( UKUUPEOPLE_ABSPATH . '/ukuupeople-config.php' );
+  $capabilities_touchpoint = touchpoint_capabilities();
+  if( is_admin() ) {
+    $user_role = get_role( 'administrator' );
+    foreach( $capabilities_touchpoint as $key => $value ) {
+      $user_role->add_cap( $value );
+    }
+    $user_role->remove_cap('edit_touchpoint');
+    $user_role->remove_cap('read_touchpoint');
+    $user_role->remove_cap('delete_touchpoint');
+  }
 }
 
 /**
