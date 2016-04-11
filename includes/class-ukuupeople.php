@@ -138,8 +138,83 @@ class UkuuPeople {
      * add admin user to ukuupeople
      */
     add_action ('user_register', array( $this,"test"));
+
+    /*
+     * Access control list
+     */
     add_filter( 'map_meta_cap', array( $this, 'set_meta_cap_ukuupeople' ), 10, 4 );
     add_filter( 'posts_clauses', array( $this, 'ukuupeople_query_clauses' ), 20, 1 );
+    add_filter( 'map_meta_cap', array( $this,'touchpoint_map_meta_cap'), 10, 4 );
+    add_filter( 'posts_clauses', array( $this, 'touchpoint_query_clauses' ), 20, 1 );
+
+  }
+
+  /*
+   * Access control list
+   */
+  function touchpoint_map_meta_cap( $caps, $cap, $user_id, $args ) {
+    if ( 'edit_touchpoint' == $cap || 'delete_touchpoint' == $cap || 'read_touchpoint' == $cap ) {
+      $post = get_post( $args[0] );
+      $post_type = get_post_type_object( $post->post_type );
+      /* Set an empty array for the caps. */
+      $caps = array();
+    }
+    if ( 'read_touchpoint' == $cap ) {
+      if ( $user_id == $post->post_author || $user_id == 1 || current_user_can( 'read_all_touchpoints')) {
+        $caps[] = 'read';
+      } else {
+        return false;
+      }
+    } elseif ( 'edit_touchpoint' == $cap ) {
+      if ( ( $user_id == $post->post_author && current_user_can('edit_own_touchpoints') ) || current_user_can('edit_all_touchpoints') || $user_id == 1  )
+        $caps[] = $post_type->cap->edit_posts;
+      else {
+        return false;
+      }
+    } elseif ( 'delete_touchpoint' == $cap ) {
+      if ( $user_id == 1 || current_user_can( 'delete_all_touchpoints' ) )
+        $caps[] = $post_type->cap->delete_others_posts;
+      elseif ( $user_id == $post->post_author && current_user_can('delete_own_touchpoints') )
+        $caps[] = $post_type->cap->delete_posts;
+      else {
+        return false;
+      }
+    }
+    /* Return the capabilities required by the user. */
+    return $caps;
+  }
+
+  function touchpoint_query_clauses( $pieces ) {
+    global $wpdb, $user_info;
+    $user_info = wp_get_current_user();
+    // Filter Opportunities By Logged-In User
+    // Switch Condition implements this join but for remaining conditions we need to implement this
+    if ( isset( $_GET['post_type'] ) && $_GET['post_type'] == 'wp-type-activity' && $user_info->ID > 1 ) {
+      if ( strpos( $pieces['join'], $wpdb->postmeta ) == false ) {
+        $pieces['join'] .= " INNER JOIN {$wpdb->postmeta} ON ( {$wpdb->posts}.ID = {$wpdb->postmeta}.post_id )";
+      }
+
+      $pieces['where'] = " AND {$wpdb->posts}.post_type = 'wp-type-activity' AND ({$wpdb->posts}.post_status = 'publish' OR {$wpdb->posts}.post_status = 'future' OR {$wpdb->posts}.post_status = 'draft' OR {$wpdb->posts}.post_status = 'pending' OR {$wpdb->posts}.post_status = 'private' )";
+
+      // If user has read_all_permissions OR edit_all_permissions OR delete_all_permissions then display all opportunities
+      $access_all = FALSE;
+      foreach ( array( 'read_all_touchpoints', 'edit_all_touchpoints', 'delete_all_touchpoints' ) as $permission ) {
+        if ( current_user_can( $permission ) ) {
+          $access_all = TRUE;
+          break;
+        }
+      }
+
+      if ( ! $access_all ) {
+        $pieces['where'] .= " AND ( {$wpdb->posts}.post_author = {$user_info->ID} OR ( {$wpdb->postmeta}.meta_key = '_wpcf_belongs_wp-type-contacts_id' AND {$wpdb->postmeta}.meta_value = (SELECT spm.post_id FROM {$wpdb->postmeta} spm WHERE spm.meta_value = '{$user_info->user_email}' AND spm.meta_key = 'wpcf-email') ) ) ";
+      }
+
+      // Similar scenario for groupby
+      if ( empty( $pieces['groupby'] ) ) {
+        $pieces['groupby'] .= " {$wpdb->posts}.ID";
+      }
+    }
+    return $pieces;
   }
 
   /**
@@ -633,7 +708,7 @@ class UkuuPeople {
 
   function ukuupeople_menu() {
     add_submenu_page( 'edit.php?post_type=wp-type-contacts', __( 'Add New Contact', 'UkuuPeople' ), __( 'Add New Contact', 'UkuuPeople' ), 'access_ukuupeoples', 'add-new-contact', array( $this, 'add_new_contact_type') );
-    add_submenu_page( 'edit.php?post_type=wp-type-contacts' , __( 'Touchpoint', 'UkuuPeople' ), __( 'Touchpoints', 'UkuuPeople' ), 'edit_ukuutouchpoints', 'edit.php?post_type=wp-type-activity', '' );
+    add_submenu_page( 'edit.php?post_type=wp-type-contacts' , __( 'Touchpoint', 'UkuuPeople' ), __( 'Touchpoints', 'UkuuPeople' ), 'access_touchpoints', 'edit.php?post_type=wp-type-activity', '' );
     require_once( UKUUPEOPLE_ABSPATH.'/includes/add-ons.php' );
     $ukuupeople_add_ons_page = add_submenu_page( 'edit.php?post_type=wp-type-contacts', __( 'UkuuPeople Add-ons', 'UkuuPeople' ), __( 'Add-ons', 'UkuuPeople' ), 'install_plugins', 'ukuupeople-addons', 'ukuupeople_add_ons_page' );
     if ( current_user_can( 'manage_categories' ) ) {
@@ -643,7 +718,8 @@ class UkuuPeople {
       add_submenu_page( NULL , '', 'googleapp', 'access_ukuupeoples', 'googleapp', 'googleapp' );
     }
 
-    add_submenu_page( NULL , '', 'View Ukuu People', 'access_ukuupeoples', 'view-ukuupeople', array( $this,'view_ukuu_people' ) );
+    add_submenu_page( NULL , '', 'View Ukuu People', 'access_ukuupeoples', 'view-ukuupeople', array($this,'view_ukuu_people') );
+    add_submenu_page( NULL , '', 'View Ukuu Touchpoint', 'access_touchpoints', 'view-touchpoint', array($this,'view_touchpoint') );
   }
 
   function ukuuCRM_dashboard_setup() {
@@ -725,7 +801,8 @@ class UkuuPeople {
    */
   function remove_row_actions( $actions ) {
     if ( get_post_type() === 'wp-type-activity' ) {
-      unset( $actions['view'] );
+      $viewURL = admin_url('admin.php?page=view-touchpoint&touchpoint_id='.get_the_ID());
+      $actions['view'] = "<a href={$viewURL}>View</a>";
     }
     if( get_post_type() === 'wp-type-contacts' ) {
       unset( $actions['edit'] );
@@ -2525,5 +2602,21 @@ class UkuuPeople {
     }
     else
       echo 'Ukuupeople doesnot exist';
+  }
+
+ function view_touchpoint( ) {
+    if( ! isset( $_GET['touchpoint_id'] ) ||  $_GET['touchpoint_id'] == NULL )
+   return;
+
+    $touchpoint_id = $_GET['touchpoint_id'];
+   $touchpoint_object = get_post( $_GET['touchpoint_id'] );
+
+   if ( isset ( $touchpoint_object->post_type ) && $touchpoint_object->post_type == 'wp-type-activity' ) {
+      wp_enqueue_style( 'ukuupeople-style', UKUUPEOPLE_ABSPATH.'/css/ukuupeople.css');
+      wp_enqueue_script( 'ukuucrm', UKUUPEOPLE_RELPATH.'/script/ukuucrm.js' , array() );
+     require_once( 'view-touchpoint.php' );
+   }
+    else
+      echo 'Touchpoint doesnot exist';
   }
 }

@@ -101,8 +101,10 @@ function create_post_type() {
     'show_ui'            => true,
     'show_in_menu'       => true,
     'query_var'          => true,
-    'rewrite'            => array(),
-    'capability_type'    => 'post',
+    'rewrite'            => array( 'slug' => 'wp-type-activity' ),
+    'capability_type'    => 'wp-type-activity',
+    'capabilities'       => touchpoint_capabilities(),
+    'map_meta_cap'       => false,
     'has_archive'        => true,
     'hierarchical'       => false,
     'menu_position'      => '',
@@ -234,6 +236,25 @@ function ukuupeople_capabilities() {
     'edit_private_posts'     => 'edit_own_ukuupeoples',
     'edit_published_posts'   => 'access_ukuupeoples',
     'create_posts'           => 'access_ukuupeoples',
+  );
+}
+
+function touchpoint_capabilities() {
+  return array(
+	  'edit_post'              => 'edit_touchpoint',
+	  'read_post'              => 'read_touchpoint',
+	  'delete_post'            => 'delete_touchpoint',
+	  'edit_posts'             => 'access_touchpoints',
+	  'edit_others_posts'      => 'edit_all_touchpoints',
+	  'publish_posts'          => 'publish_touchpoints',
+	  'read_private_posts'     => 'read_all_touchpoints',
+	  'delete_posts'           => 'delete_own_touchpoints',
+	  'delete_private_posts'   => 'delete_own_touchpoints',
+	  'delete_published_posts' => 'delete_own_touchpoints',
+	  'delete_others_posts'    => 'delete_all_touchpoints',
+	  'edit_private_posts'     => 'edit_own_touchpoints',
+	  'edit_published_posts'   => 'access_touchpoints',
+	  'create_posts'           => 'access_touchpoints',
   );
 }
 
