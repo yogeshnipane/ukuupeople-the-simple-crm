@@ -235,7 +235,7 @@ function ukuupeople_capabilities() {
     'delete_others_posts'    => 'delete_all_ukuupeoples',
     'edit_private_posts'     => 'edit_own_ukuupeoples',
     'edit_published_posts'   => 'access_ukuupeoples',
-    'create_posts'           => 'access_ukuupeoples',
+    'create_posts'           => 'create_ukuupeoples',
   );
 }
 
@@ -254,7 +254,7 @@ function touchpoint_capabilities() {
 	  'delete_others_posts'    => 'delete_all_touchpoints',
 	  'edit_private_posts'     => 'edit_own_touchpoints',
 	  'edit_published_posts'   => 'access_touchpoints',
-	  'create_posts'           => 'access_touchpoints',
+	  'create_posts'           => 'create_touchpoints',
   );
 }
 

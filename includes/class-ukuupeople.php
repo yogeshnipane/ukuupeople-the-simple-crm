@@ -179,6 +179,9 @@ class UkuuPeople {
       else {
         return false;
       }
+    } elseif ( $cap == 'edit_posts' && current_user_can( 'create_touchpoints') && current_user_can( 'access_touchpoints') && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'wp-type-activity') {
+      //$caps[] = $post_type->cap->edit_posts;
+      return array();
     }
     /* Return the capabilities required by the user. */
     return $caps;
@@ -302,6 +305,8 @@ class UkuuPeople {
           return false;
         }
       }
+    } elseif ( $cap == 'edit_posts' && current_user_can( 'create_ukuupeoples') && current_user_can( 'access_ukuupeoples') && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'wp-type-contacts') {
+      return array();
     }
     return $caps;
   }
@@ -2205,6 +2210,7 @@ class UkuuPeople {
     remove_meta_box( 'wp-type-activity-typesdiv', 'wp-type-activity' , 'side' );
     remove_menu_page( 'edit.php?post_type=wp-type-activity' );
     remove_submenu_page( 'edit.php?post_type=wp-type-contacts', 'post-new.php?post_type=wp-type-contacts' );
+    remove_submenu_page( 'edit.php?post_type=wp-type-contacts', 'edit.php?post_type=wp-type-contacts&page=add-new-contact' );
     remove_submenu_page( 'edit.php?post_type=wp-type-contacts','edit-tags.php?taxonomy=category&amp;post_type=wp-type-contacts' );
     remove_submenu_page( 'edit.php?post_type=wp-type-contacts','edit-tags.php?taxonomy=wp-type-group&amp;post_type=wp-type-contacts' );
     remove_submenu_page( 'edit.php?post_type=wp-type-contacts','edit-tags.php?taxonomy=wp-type-tags&amp;post_type=wp-type-contacts' );
