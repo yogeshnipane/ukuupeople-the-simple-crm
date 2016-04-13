@@ -137,7 +137,7 @@ class UkuuPeople {
     /*
      * add admin user to ukuupeople
      */
-    add_action ('user_register', array( $this,"test"));
+    add_action ('user_register', array( $this,"register_user"));
 
     /*
      * Access control list
@@ -311,37 +311,35 @@ class UkuuPeople {
     return $caps;
   }
 
-  function test() {
-    if (isset($_POST['role']) && $_POST['role'] == 'administrator') {
-      $people_post = array(
-        'post_title'    => $_POST['email'],
-        'post_type'     => 'wp-type-contacts',
-        'post_status'   => 'private',
-        'post_author'   => 1 ,
-      );
+  function register_user() {
+    $people_post = array(
+      'post_title'    => $_POST['email'],
+      'post_type'     => 'wp-type-contacts',
+      'post_status'   => 'private',
+      'post_author'   => 1 ,
+    );
 
-      // Insert the people into the database
-      $people_ID = wp_insert_post( $people_post );
+    // Insert the people into the database
+    $people_ID = wp_insert_post( $people_post );
 
-      // update post meta for peeple
-      $name = $_POST['first_name'];
-      if ( $name == '' )
-        update_post_meta( $people_ID, 'wpcf-first-name', 'admin');
-      else
-        update_post_meta( $people_ID, 'wpcf-first-name', $name);
+    // update post meta for peeple
+    $name = $_POST['first_name'];
+    if ( $name == '' )
+      update_post_meta( $people_ID, 'wpcf-first-name', 'admin');
+    else
+      update_post_meta( $people_ID, 'wpcf-first-name', $name);
 
-      $name = $_POST['last_name'];
-      if ( $name == '' )
-        update_post_meta( $people_ID, 'wpcf-last-name', 'admin');
-      else
-        update_post_meta( $people_ID, 'wpcf-last-name', $name);
+    $name = $_POST['last_name'];
+    if ( $name == '' )
+      update_post_meta( $people_ID, 'wpcf-last-name', 'admin');
+    else
+      update_post_meta( $people_ID, 'wpcf-last-name', $name);
 
-      update_post_meta( $people_ID, 'wpcf-display-name', $_POST['user_login']);
-      update_post_meta( $people_ID, 'wpcf-email', $_POST['email'] );
+    update_post_meta( $people_ID, 'wpcf-display-name', $_POST['user_login']);
+    update_post_meta( $people_ID, 'wpcf-email', $_POST['email'] );
 
-      wp_set_object_terms( $people_ID, 'wp-type-ind-contact', 'wp-type-contacts-subtype', true );
-      wp_set_object_terms( $people_ID, 'wp-type-our-team', 'wp-type-group', true );
-    }
+    wp_set_object_terms( $people_ID, 'wp-type-ind-contact', 'wp-type-contacts-subtype', true );
+    wp_set_object_terms( $people_ID, 'wp-type-our-team', 'wp-type-group', true );
   }
 
   // Here it check the pages that we are working on are the ones used by the Media Uploader.
@@ -1791,15 +1789,15 @@ class UkuuPeople {
             <div class="row-actions">
               <?php if ( current_user_can('edit_ukuupeople', $ids) ) { ?>
             <span class="edit"><a title="Edit this item" href="<?php echo $URL; ?>"><?php _e( 'Edit', 'UkuuPeople' ); ?></a>|</span>
-            <span class="inline hide-if-no-js"><a class="editinline" title="Edit this item inline" href="#"><?php _e( 'Quick Edit', 'UkuuPeople' ); ?></a>
+            <span class="inline hide-if-no-js"><a class="editinline" title="Edit this item inline" href="#"><?php _e( 'Quick Edit', 'UkuuPeople' ); ?></a>|
             <?php } ?>
             <?php if ( current_user_can('delete_ukuupeople', $ids) ) { ?>
-            |</span><span class="trash"><a class="submitdelete" href="<?php echo $deleteURL; ?>" title="<?php _e( 'Move this item to the Trash', 'UkuuPeople' ); ?>"><?php _e( 'Trash', 'UkuuPeople' ); ?></a></span>
+            </span><span class="trash"><a class="submitdelete" href="<?php echo $deleteURL; ?>" title="<?php _e( 'Move this item to the Trash', 'UkuuPeople' ); ?>"><?php _e( 'Trash', 'UkuuPeople' ); ?></a></span>|
             <?php } else echo "</span>"; ?>
             <?php
             // View Ukuupeople COde
             if ( current_user_can('read_ukuupeople', $ids) ) { ?>
-            |<span class="view"><a title="View this item" href="<?php echo admin_url('admin.php?page=view-ukuupeople&cid='.$ids); ?>"><?php _e( 'View', 'UkuuPeople' ); ?></a></span>
+            <span class="view"><a title="View this item" href="<?php echo admin_url('admin.php?page=view-ukuupeople&cid='.$ids); ?>"><?php _e( 'View', 'UkuuPeople' ); ?></a></span>
             <?php }
             echo '</div>'; // row-actions closed
           }
