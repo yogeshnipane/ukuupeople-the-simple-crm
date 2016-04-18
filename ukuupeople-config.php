@@ -246,7 +246,7 @@ function touchpoint_capabilities() {
 	  'delete_post'            => 'delete_touchpoint',
 	  'edit_posts'             => 'access_touchpoints',
 	  'edit_others_posts'      => 'edit_all_touchpoints',
-	  'publish_posts'          => 'publish_touchpoints',
+	  'publish_posts'          => 'access_touchpoints',
 	  'read_private_posts'     => 'read_all_touchpoints',
 	  'delete_posts'           => 'delete_own_touchpoints',
 	  'delete_private_posts'   => 'delete_own_touchpoints',
@@ -254,7 +254,7 @@ function touchpoint_capabilities() {
 	  'delete_others_posts'    => 'delete_all_touchpoints',
 	  'edit_private_posts'     => 'edit_own_touchpoints',
 	  'edit_published_posts'   => 'access_touchpoints',
-	  'create_posts'           => 'create_touchpoints',
+	  'create_posts'           => 'edit_own_touchpoints',
   );
 }
 
