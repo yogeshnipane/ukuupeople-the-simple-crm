@@ -179,7 +179,7 @@ class UkuuPeople {
       else {
         return false;
       }
-    } elseif ( $cap == 'edit_posts' && current_user_can( 'create_touchpoints') && current_user_can( 'access_touchpoints') && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'wp-type-activity') {
+    } elseif ( $cap == 'edit_posts' && current_user_can( 'edit_own_touchpoints') && current_user_can( 'access_touchpoints') && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'wp-type-activity') {
       //$caps[] = $post_type->cap->edit_posts;
       return array();
     }
