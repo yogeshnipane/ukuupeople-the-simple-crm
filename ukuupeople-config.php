@@ -227,7 +227,7 @@ function ukuupeople_capabilities() {
     'delete_post'            => 'delete_ukuupeople',
     'edit_posts'             => 'access_ukuupeoples',
     'edit_others_posts'      => 'edit_all_ukuupeoples',
-    'publish_posts'          => 'publish_ukuupeoples',
+    'publish_posts'          => 'access_ukuupeoples',
     'read_private_posts'     => 'read_all_ukuupeoples',
     'delete_posts'           => 'delete_own_ukuupeoples',
     'delete_private_posts'   => 'delete_own_ukuupeoples',
@@ -235,7 +235,7 @@ function ukuupeople_capabilities() {
     'delete_others_posts'    => 'delete_all_ukuupeoples',
     'edit_private_posts'     => 'edit_own_ukuupeoples',
     'edit_published_posts'   => 'access_ukuupeoples',
-    'create_posts'           => 'create_ukuupeoples',
+    'create_posts'           => 'edit_own_ukuupeoples',
   );
 }
 

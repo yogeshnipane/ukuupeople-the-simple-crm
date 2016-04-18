@@ -261,8 +261,20 @@ class UkuuPeople {
 
   function set_meta_cap_ukuupeople( $caps, $cap, $user_id, $args ) {
     if ( 'edit_ukuupeople' == $cap || 'delete_ukuupeople' == $cap || 'read_ukuupeople' == $cap ) {
-      $post = get_post( $args[0] );
-      $post_type = get_post_type_object( $post->post_type );
+      $postID = NULL;
+      if ( isset( $args[0] ) )
+        $postID = $args[0];
+      elseif ( isset( $_GET['cid'] ) )
+        $postID = $_GET['cid'];
+      else
+        return false;
+      $post = get_post( $postID );
+
+      if ( $post != NULL )
+        $post_type = get_post_type_object( $post->post_type );
+      else
+        return false;
+
       /* Set an empty array for the caps. */
       $caps = array();
     }
@@ -271,12 +283,14 @@ class UkuuPeople {
       if ( $user_id == $post->post_author || $user_id == 1 || current_user_can( 'read_all_ukuupeoples')) {
         $caps[] = 'read';
       } else {
-        $current_user_email = wp_get_current_user()->user_email;
-        $post_author_email = get_post_meta( $args[0], 'wpcf-email', TRUE );
-        if ( $current_user_email == $post_author_email ) {
-          $caps[] = 'read';
-        } else {
-          return false;
+        if( $postID ) {
+          $current_user_email = wp_get_current_user()->user_email;
+          $post_author_email = get_post_meta( $args[0], 'wpcf-email', TRUE );
+          if ( $current_user_email == $post_author_email ) {
+            $caps[] = 'read';
+          } else {
+            return false;
+          }
         }
       }
     } elseif ( 'edit_ukuupeople' == $cap ) {
@@ -305,7 +319,7 @@ class UkuuPeople {
           return false;
         }
       }
-    } elseif ( $cap == 'edit_posts' && current_user_can( 'create_ukuupeoples') && current_user_can( 'access_ukuupeoples') && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'wp-type-contacts') {
+    } elseif ( 'edit_posts' == $cap && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'wp-type-contacts' && current_user_can( 'edit_own_ukuupeoples') && current_user_can( 'access_ukuupeoples' ) ) {
       return array();
     }
     return $caps;
