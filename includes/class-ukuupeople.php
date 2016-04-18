@@ -326,34 +326,36 @@ class UkuuPeople {
   }
 
   function register_user() {
-    $people_post = array(
-      'post_title'    => $_POST['email'],
-      'post_type'     => 'wp-type-contacts',
-      'post_status'   => 'private',
-      'post_author'   => 1 ,
-    );
+    if ( isset( $_POST['email'] ) ) {
+      $people_post = array(
+        'post_title'    => $_POST['email'],
+        'post_type'     => 'wp-type-contacts',
+        'post_status'   => 'private',
+        'post_author'   => 1 ,
+      );
 
-    // Insert the people into the database
-    $people_ID = wp_insert_post( $people_post );
+      // Insert the people into the database
+      $people_ID = wp_insert_post( $people_post );
 
-    // update post meta for peeple
-    $name = $_POST['first_name'];
-    if ( $name == '' )
-      update_post_meta( $people_ID, 'wpcf-first-name', 'admin');
-    else
-      update_post_meta( $people_ID, 'wpcf-first-name', $name);
+      // update post meta for peeple
+      $name = $_POST['first_name'];
+      if ( $name == '' )
+        update_post_meta( $people_ID, 'wpcf-first-name', 'admin');
+      else
+        update_post_meta( $people_ID, 'wpcf-first-name', $name);
 
-    $name = $_POST['last_name'];
-    if ( $name == '' )
-      update_post_meta( $people_ID, 'wpcf-last-name', 'admin');
-    else
-      update_post_meta( $people_ID, 'wpcf-last-name', $name);
+      $name = $_POST['last_name'];
+      if ( $name == '' )
+        update_post_meta( $people_ID, 'wpcf-last-name', 'admin');
+      else
+        update_post_meta( $people_ID, 'wpcf-last-name', $name);
 
-    update_post_meta( $people_ID, 'wpcf-display-name', $_POST['user_login']);
-    update_post_meta( $people_ID, 'wpcf-email', $_POST['email'] );
+      update_post_meta( $people_ID, 'wpcf-display-name', $_POST['user_login']);
+      update_post_meta( $people_ID, 'wpcf-email', $_POST['email'] );
 
-    wp_set_object_terms( $people_ID, 'wp-type-ind-contact', 'wp-type-contacts-subtype', true );
-    wp_set_object_terms( $people_ID, 'wp-type-our-team', 'wp-type-group', true );
+      wp_set_object_terms( $people_ID, 'wp-type-ind-contact', 'wp-type-contacts-subtype', true );
+      wp_set_object_terms( $people_ID, 'wp-type-our-team', 'wp-type-group', true );
+    }
   }
 
   // Here it check the pages that we are working on are the ones used by the Media Uploader.
