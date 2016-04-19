@@ -147,6 +147,13 @@ class UkuuPeople {
     add_filter( 'map_meta_cap', array( $this,'touchpoint_map_meta_cap'), 10, 4 );
     add_filter( 'posts_clauses', array( $this, 'touchpoint_query_clauses' ), 20, 1 );
 
+    //add_meta_box( 'members-cp', esc_html__( 'Content Permissions', 'members' ), array( $this, 'meta_box' ), $post_type, 'advanced', 'high' );
+    add_action( 'do_meta_boxes' , array( $this, 'remove_post_custom_fields' ) );
+  }
+
+  function remove_post_custom_fields() {
+    remove_meta_box( 'members-cp' , 'wp-type-contacts' , 'advanced' );
+    remove_meta_box( 'members-cp' , 'wp-type-activity' , 'advanced' );
   }
 
   /*
