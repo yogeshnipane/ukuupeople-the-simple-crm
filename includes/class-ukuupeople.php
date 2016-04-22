@@ -216,7 +216,22 @@ class UkuuPeople {
       }
 
       if ( ! $access_all ) {
-        $pieces['where'] .= " AND ( {$wpdb->posts}.post_author = {$user_info->ID} OR ( {$wpdb->postmeta}.meta_key = '_wpcf_belongs_wp-type-contacts_id' AND {$wpdb->postmeta}.meta_value = (SELECT spm.post_id FROM {$wpdb->postmeta} spm WHERE spm.meta_value = '{$user_info->user_email}' AND spm.meta_key = 'wpcf-email') ) ) ";
+
+        //$que = "SELECT spm.post_id FROM {$wpdb->postmeta} spm WHERE spm.meta_value = '{$user_info->user_email}' AND spm.meta_key = 'wpcf-email'";
+        $que = $wpdb->get_results( $wpdb->prepare(
+               "
+               SELECT $wpdb->postmeta.post_id
+               FROM $wpdb->postmeta
+               WHERE $wpdb->postmeta.meta_value = %s
+               AND $wpdb->postmeta.meta_key = 'wpcf-email'
+               ",
+               $user_info->user_email
+               ) ,ARRAY_A);
+        $data = explode( ",", $que[0]['post_id']);
+        $que = serialize($data);
+
+        $pieces['where'] .= " AND ( {$wpdb->posts}.post_author = {$user_info->ID} OR ( {$wpdb->postmeta}.meta_key = '_wpcf_belongs_wp-type-contacts_id' AND {$wpdb->postmeta}.meta_value = (SELECT spm.post_id FROM {$wpdb->postmeta} spm WHERE spm.meta_value = '{$user_info->user_email}' AND spm.meta_key = 'wpcf-email') ) OR ( {$wpdb->postmeta}.meta_key = 'wpcf_assigned_to' AND {$wpdb->postmeta}.meta_value = '{$que}' ) ) ";
+
       }
 
       // Similar scenario for groupby
@@ -1664,6 +1679,18 @@ class UkuuPeople {
         $tax_name = $tax_obj->labels->name;
         global $wpdb;
         if ( !in_array( 'administrator', $current_user->roles) ) {
+          $que = $wpdb->get_results( $wpdb->prepare(
+                   "
+               SELECT $wpdb->postmeta.post_id
+               FROM $wpdb->postmeta
+               WHERE $wpdb->postmeta.meta_value = %s
+               AND $wpdb->postmeta.meta_key = 'wpcf-email'
+               ",
+               $current_user->user_email
+               ) ,ARRAY_A);
+         $data = explode( ",", $que[0]['post_id']);
+         $que = serialize($data);
+
           $terms = $wpdb->get_results( $wpdb->prepare(
                "
                SELECT $wpdb->terms.term_id, $wpdb->terms.slug , $wpdb->terms.name, COALESCE(s.count ,0) AS count
@@ -1675,7 +1702,7 @@ class UkuuPeople {
                LEFT JOIN $wpdb->term_taxonomy ON ($wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id)
                LEFT JOIN $wpdb->terms ON ($wpdb->term_taxonomy.term_id = $wpdb->terms.term_id)
                WHERE (post_status = 'publish' OR  post_status = 'private')
-               AND (post_author = %d OR $wpdb->posts.ID IN (SELECT $wpdb->posts.ID FROM $wpdb->postmeta LEFT JOIN $wpdb->posts ON ( $wpdb->posts.ID = $wpdb->postmeta.post_id) WHERE $wpdb->postmeta.meta_key = '_wpcf_belongs_wp-type-contacts_id' AND $wpdb->postmeta.meta_value = %d AND $wpdb->posts.post_author != %d))
+               AND (post_author = %d OR $wpdb->posts.ID IN (SELECT $wpdb->posts.ID FROM $wpdb->postmeta LEFT JOIN $wpdb->posts ON ( $wpdb->posts.ID = $wpdb->postmeta.post_id) WHERE ( ($wpdb->postmeta.meta_key = '_wpcf_belongs_wp-type-contacts_id' AND $wpdb->postmeta.meta_value = %d) OR ($wpdb->postmeta.meta_key = 'wpcf_assigned_to' AND $wpdb->postmeta.meta_value = '{$que}') ) AND $wpdb->posts.post_author != %d ))
                AND post_type = 'wp-type-activity'
                AND slug IS NOT NULL
                AND taxonomy= %s group by slug ) as s
