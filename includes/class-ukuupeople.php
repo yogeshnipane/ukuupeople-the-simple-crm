@@ -1556,6 +1556,7 @@ class UkuuPeople {
    */
   function ukuu_custom_filters_posts() {
     global $typenow;
+    $user_ID = get_current_user_id();
     if ( $typenow == "wp-type-contacts" ) {
       wp_enqueue_script( 'd3', UKUUPEOPLE_RELPATH.'/script/d3/d3.min.js' , array() );
       wp_enqueue_script( 'ukuucrm', UKUUPEOPLE_RELPATH.'/script/ukuucrm.js' , array() );
@@ -1637,6 +1638,20 @@ class UkuuPeople {
       }
     }
     if ( $typenow == "wp-type-activity" ) {
+      global $current_user;
+      $args = array(
+        'fields' => 'ids',
+        'post_type' => 'wp-type-contacts',
+        'post_status' => array( 'private' , 'publish' ),
+        'posts_per_page'=> 1,
+        'meta_query' => array(
+          array(
+            'key' => 'wpcf-email',
+            'value' => $current_user->user_email,
+          )
+        )
+      );
+      $postslist = get_posts( $args );
       wp_enqueue_script( 'd3', UKUUPEOPLE_RELPATH.'/script/d3/d3.min.js' , array() );
       wp_enqueue_script( 'ukuucrm', UKUUPEOPLE_RELPATH.'/script/ukuucrm.js' , array() );
       $filters = array('wp-type-activity-types');
@@ -1648,8 +1663,34 @@ class UkuuPeople {
         $tax_obj = get_taxonomy( $tax_slug );
         $tax_name = $tax_obj->labels->name;
         global $wpdb;
-        $terms = $wpdb->get_results( $wpdb->prepare(
+        if ( !in_array( 'administrator', $current_user->roles) ) {
+          $terms = $wpdb->get_results( $wpdb->prepare(
                "
+               SELECT $wpdb->terms.term_id, $wpdb->terms.slug , $wpdb->terms.name, COALESCE(s.count ,0) AS count
+               FROM $wpdb->terms
+               LEFT JOIN $wpdb->term_taxonomy ON ($wpdb->terms.term_id = $wpdb->term_taxonomy.term_id)
+               LEFT JOIN (SELECT  COUNT($wpdb->posts.ID) as count, slug , name , $wpdb->terms.term_id FROM $wpdb->users
+               LEFT JOIN $wpdb->posts ON ($wpdb->posts.post_author = $wpdb->users.ID)
+               LEFT JOIN $wpdb->term_relationships ON ($wpdb->posts.ID = $wpdb->term_relationships.object_id)
+               LEFT JOIN $wpdb->term_taxonomy ON ($wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id)
+               LEFT JOIN $wpdb->terms ON ($wpdb->term_taxonomy.term_id = $wpdb->terms.term_id)
+               WHERE (post_status = 'publish' OR  post_status = 'private')
+               AND (post_author = %d OR $wpdb->posts.ID IN (SELECT $wpdb->posts.ID FROM $wpdb->postmeta LEFT JOIN $wpdb->posts ON ( $wpdb->posts.ID = $wpdb->postmeta.post_id) WHERE $wpdb->postmeta.meta_key = '_wpcf_belongs_wp-type-contacts_id' AND $wpdb->postmeta.meta_value = %d AND $wpdb->posts.post_author != %d))
+               AND post_type = 'wp-type-activity'
+               AND slug IS NOT NULL
+               AND taxonomy= %s group by slug ) as s
+               ON ($wpdb->term_taxonomy.term_id = s.term_id)
+               WHERE taxonomy= %s ORDER BY $wpdb->terms.term_id ASC
+               ",
+               $user_ID,
+               $postslist[0],
+               $user_ID,
+               $tax_slug,
+               $tax_slug
+               ) , OBJECT );
+        } else {
+          $terms = $wpdb->get_results( $wpdb->prepare(
+                     "
                SELECT $wpdb->terms.term_id, $wpdb->terms.slug , $wpdb->terms.name, COALESCE(s.count ,0) AS count
                FROM $wpdb->terms
                LEFT JOIN $wpdb->term_taxonomy ON ($wpdb->terms.term_id = $wpdb->term_taxonomy.term_id)
@@ -1666,7 +1707,8 @@ class UkuuPeople {
                ",
                $tax_slug ,
                $tax_slug
-        ) , OBJECT );
+               ) , OBJECT);
+        }
         echo "<select name='$tax_slug' id='$tax_slug' class='postform'>";
         echo "<option value=''>Show All $tax_name</option>";
         foreach ( $terms as $term ) {
@@ -1707,9 +1749,15 @@ class UkuuPeople {
         echo '<option value='. $values->ID , $selected == $values->ID ? ' selected="selected"' : '','>' . $display .'</option>';
       }
       echo "</select>";
-      $count_posts = (array) wp_count_posts( $typenow, 'readable', false );
+      $count_posts = (array) wp_count_posts( $typenow );
       unset($count_posts['auto-draft']);
       $counts = array_sum( $count_posts );
+      if( !in_array( 'administrator', $current_user->roles) ){
+        $counts = 0;
+        foreach( $terms as $k => $v ){
+          $counts += $v->count;
+        }
+      }
       $selected = ( count( $_GET ) == 1 ) ? 'current' : '';
       $string[]  = "<li class='all'><a href=' ". add_query_arg( array( 'post_type' => 'wp-type-activity' ) ,$url )."' class='$selected'>".__( 'All', 'UkuuPeople' )." </a>($counts)</li>";
       $trashCount = $count_posts['trash'];
