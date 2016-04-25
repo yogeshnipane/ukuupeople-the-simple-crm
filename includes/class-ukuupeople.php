@@ -1581,9 +1581,34 @@ class UkuuPeople {
       foreach ( $filters as $tax_slug ) {
         $tax_obj = get_taxonomy( $tax_slug );
         $tax_name = $tax_obj->labels->name;
-        global $wpdb;
-        $terms = $wpdb->get_results( $wpdb->prepare(
-               "
+        global $wpdb, $current_user;
+
+        if ( !in_array( 'administrator', $current_user->roles) ) {
+          $terms = $wpdb->get_results( $wpdb->prepare(
+                     "
+               SELECT $wpdb->terms.term_id, $wpdb->terms.slug , $wpdb->terms.name, COALESCE(s.count ,0) AS count
+               FROM $wpdb->terms
+               LEFT JOIN $wpdb->term_taxonomy ON ($wpdb->terms.term_id = $wpdb->term_taxonomy.term_id)
+               LEFT JOIN (SELECT  COUNT($wpdb->posts.ID) as count, slug , name , $wpdb->terms.term_id FROM $wpdb->posts
+               LEFT JOIN $wpdb->term_relationships ON ($wpdb->posts.ID = $wpdb->term_relationships.object_id)
+               LEFT JOIN $wpdb->term_taxonomy ON ($wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id)
+               LEFT JOIN $wpdb->terms ON ($wpdb->term_taxonomy.term_id = $wpdb->terms.term_id)
+               WHERE (post_status = 'publish' OR  post_status = 'private')
+               AND post_type = 'wp-type-contacts'
+               AND ( post_author = %d OR post_title = %s )
+               AND slug IS NOT NULL
+               AND taxonomy= %s group by slug ) as s
+               ON ($wpdb->term_taxonomy.term_id = s.term_id)
+               WHERE taxonomy= %s ORDER BY $wpdb->terms.term_id ASC
+               ",
+                     $user_ID,
+                     $current_user->user_email,
+                     $tax_slug ,
+                     $tax_slug
+                   ) , OBJECT);
+        } else {
+          $terms = $wpdb->get_results( $wpdb->prepare(
+                     "
                SELECT $wpdb->terms.term_id, $wpdb->terms.slug , $wpdb->terms.name, COALESCE(s.count ,0) AS count
                FROM $wpdb->terms
                LEFT JOIN $wpdb->term_taxonomy ON ($wpdb->terms.term_id = $wpdb->term_taxonomy.term_id)
@@ -1598,29 +1623,36 @@ class UkuuPeople {
                ON ($wpdb->term_taxonomy.term_id = s.term_id)
                WHERE taxonomy= %s ORDER BY $wpdb->terms.term_id ASC
                ",
-               $tax_slug ,
-               $tax_slug
-        ) , OBJECT);
-        echo "<select name='$tax_slug' id='$tax_slug' class='postform'>";
-        echo "<option value=''>".__( 'Show All','UkuuPeople' )." $tax_name</option>";
-        foreach ( $terms as $term ) {
-          $selected = isset($_GET[$tax_slug]) ? $_GET[$tax_slug] : null;
-          echo '<option value='. $term->slug, $selected == $term->slug ? ' selected="selected"' : '','>' . $term->name .' (' . $term->count .')</option>';
-          if ( $tax_slug == "wp-type-contacts-subtype" ) {
-            $graph[] = $term->count;
-            if ( isset( $_GET['wp-type-contacts-subtype'] ) && $term->slug == $_GET['wp-type-contacts-subtype'] ) {
-              $class = ' class="current"';
-            } else {
-              $class = '';
-            }
-            $string[]  = "<li class='{$term->slug}'><a href=' ". add_query_arg( array('post_type' => 'wp-type-contacts', 'wp-type-contacts-subtype' => $term->slug) ,$url )."' $class'>{$term->name} </a>($term->count)</li>";
-          }
+                     $tax_slug ,
+                     $tax_slug
+                   ) , OBJECT);
         }
-        echo "</select>";
-      }
+          echo "<select name='$tax_slug' id='$tax_slug' class='postform'>";
+          echo "<option value=''>".__( 'Show All','UkuuPeople' )." $tax_name</option>";
+          foreach ( $terms as $term ) {
+            $selected = isset($_GET[$tax_slug]) ? $_GET[$tax_slug] : null;
+            echo '<option value='. $term->slug, $selected == $term->slug ? ' selected="selected"' : '','>' . $term->name .' (' . $term->count .')</option>';
+            if ( $tax_slug == "wp-type-contacts-subtype" ) {
+              $graph[] = $term->count;
+              if ( isset( $_GET['wp-type-contacts-subtype'] ) && $term->slug == $_GET['wp-type-contacts-subtype'] ) {
+                $class = ' class="current"';
+              } else {
+                $class = '';
+              }
+              $string[]  = "<li class='{$term->slug}'><a href=' ". add_query_arg( array('post_type' => 'wp-type-contacts', 'wp-type-contacts-subtype' => $term->slug) ,$url )."' $class'>{$term->name} </a>($term->count)</li>";
+            }
+          }
+          echo "</select>";
+        }
       $count_posts = (array) wp_count_posts( $typenow, 'readable', false );
       unset( $count_posts['auto-draft'] );
       $counts = array_sum( $count_posts );
+      if( !in_array( 'administrator', $current_user->roles) ) {
+        $counts = 0;
+        foreach( $terms as $k => $v ){
+          $counts += $v->count;
+        }
+      }
       $selected = ( count( $_GET ) == 1 ) ? 'current' : '';
       $string[]  = "<li class='all'><a href='". add_query_arg( array( 'post_type' => 'wp-type-contacts' ) ,$url )."' class='$selected'>".__( 'All','UkuuPeople' )."</a>($counts)</li>";
       $trashCount = $count_posts['trash'];
@@ -1647,7 +1679,7 @@ class UkuuPeople {
           echo "</tr></table>";
           echo "</div></div>";
           echo "<div  id='chart' type='".json_encode( $contacts_count )."' color='".json_encode( array_values($color) )."'></div></div></div>";
-           echo "<ul class='subsubsub'>$str</ul>";
+          echo "<ul class='subsubsub'>$str</ul>";
         }
         echo "</div></div>";
       }
@@ -1870,7 +1902,10 @@ class UkuuPeople {
           $viewURL = get_permalink( $ids );
           $deleteURL = get_delete_post_link( $ids );
           $permDeleteURL = get_delete_post_link( $ids, null, true );
-          echo "<a href=$URL>".$display."</a>";
+          if ( current_user_can( 'edit_all_ukuupeoples' ) )
+            echo "<a href=$URL>".$display."</a>";
+          else
+            echo $display;
           if ( get_post_status ( $ids ) == 'trash' ) {
             $_wpnonce = wp_create_nonce( 'untrash-post_' . $ids );
             $url = admin_url( 'post.php?post=' . $ids . '&action=untrash&_wpnonce=' . $_wpnonce ); ?>

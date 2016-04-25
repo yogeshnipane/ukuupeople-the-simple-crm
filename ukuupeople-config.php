@@ -135,7 +135,7 @@ function create_post_type() {
 		'show_ui'           => true,
 		'show_admin_column' => true,
 		'query_var'         => true,
-		'rewrite'           => array( ),
+		'rewrite'           => array(),
 	);
 
 	register_taxonomy( 'wp-type-group', array( 'wp-type-contacts' ), $args );
@@ -235,7 +235,7 @@ function ukuupeople_capabilities() {
     'delete_others_posts'    => 'delete_all_ukuupeoples',
     'edit_private_posts'     => 'edit_own_ukuupeoples',
     'edit_published_posts'   => 'access_ukuupeoples',
-    'create_posts'           => 'edit_own_ukuupeoples',
+    'create_posts'           => 'create_ukuupeoples',
   );
 }
 
