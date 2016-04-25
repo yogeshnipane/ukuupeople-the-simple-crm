@@ -341,7 +341,7 @@ class UkuuPeople {
           return false;
         }
       }
-    } elseif ( 'edit_posts' == $cap && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'wp-type-contacts' && current_user_can( 'edit_own_ukuupeoples') && current_user_can( 'access_ukuupeoples' ) ) {
+    } elseif ( 'edit_posts' == $cap && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'wp-type-contacts' && ( current_user_can( 'edit_own_ukuupeoples') || current_user_can( 'edit_all_ukuupeoples' ) ) && current_user_can( 'access_ukuupeoples' ) ) {
       return array();
     }
     return $caps;
