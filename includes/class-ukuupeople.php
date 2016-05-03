@@ -143,11 +143,9 @@ class UkuuPeople {
      * Access control list
      */
     add_filter( 'map_meta_cap', array( $this, 'set_meta_cap_ukuupeople' ), 10, 4 );
-    add_filter( 'posts_clauses', array( $this, 'ukuupeople_query_clauses' ), 20, 1 );
+    add_filter( 'posts_clauses', array( $this, 'ukuupeople_query_clauses' ), 1, 2);
     add_filter( 'map_meta_cap', array( $this,'touchpoint_map_meta_cap'), 10, 4 );
     add_filter( 'posts_clauses', array( $this, 'touchpoint_query_clauses' ), 20, 1 );
-
-    //add_meta_box( 'members-cp', esc_html__( 'Content Permissions', 'members' ), array( $this, 'meta_box' ), $post_type, 'advanced', 'high' );
     add_action( 'do_meta_boxes' , array( $this, 'remove_post_custom_fields' ) );
   }
 
@@ -187,7 +185,6 @@ class UkuuPeople {
         return false;
       }
     } elseif ( $cap == 'edit_posts' && current_user_can( 'edit_own_touchpoints') && current_user_can( 'access_touchpoints') && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'wp-type-activity') {
-      //$caps[] = $post_type->cap->edit_posts;
       return array();
     }
     /* Return the capabilities required by the user. */
@@ -249,8 +246,8 @@ class UkuuPeople {
    *
    * @return array $pieces
    */
-  function ukuupeople_query_clauses( $pieces ) {
-    global $wpdb, $user_info;
+  function ukuupeople_query_clauses( $pieces, $query ) {
+    global $wpdb, $user_info, $pagenow;
     $user_info = wp_get_current_user();
     // Filter Opportunities By Logged-In User
     // Switch Condition implements this join but for remaining conditions we need to implement this
@@ -277,6 +274,48 @@ class UkuuPeople {
       // Similar scenario for groupby
       if ( empty( $pieces['groupby'] ) )
         $pieces['groupby'] .= " {$wpdb->posts}.ID";
+    }
+
+    if( $pagenow == 'edit.php' && isset( $_GET['post_type'] ) && 'wp-type-contacts' == $_GET['post_type']  && $query->is_main_query() )  {
+      $user = wp_get_current_user();
+      if( !$user->caps['administrator'] ) {
+        if( 'wp-type-contacts' == $_GET['post_type'] && ( !isset( $_GET['wp-type-tags'] ) && !isset( $_GET['wp-type-contacts-subtype'] ) && !isset( $_GET['wp-type-group'] ) ) ) {
+          $pieces['join'] = " LEFT JOIN wp_term_relationships ON (wp_posts.ID = wp_term_relationships.object_id) LEFT JOIN wp_postmeta ON ( wp_posts.ID = wp_postmeta.post_id ) LEFT JOIN wp_terms ON (wp_term_relationships.term_taxonomy_id = wp_terms.term_id) LEFT JOIN wp_postmeta wp_rd ON wp_rd.post_id = wp_posts.ID AND wp_rd.meta_key = 'meta_value'";
+        } elseif( 'wp-type-contacts' == $_GET['post_type'] && ( isset( $_GET['wp-type-contacts-subtype'] ) && $_GET['wp-type-contacts-subtype'] != '' ) && ( ( isset( $_GET['wp-type-tags'] ) && $_GET['wp-type-tags'] == '' ) && ( isset( $_GET['wp-type-group'] ) && $_GET['wp-type-group'] == '' ) ) || ( !isset( $_GET['wp-type-tags'] ) && !isset( $_GET['wp-type-group'] ) ) ) {
+          $pieces['join'] = " LEFT JOIN wp_term_relationships ON (wp_posts.ID = wp_term_relationships.object_id) LEFT JOIN wp_postmeta ON ( wp_posts.ID = wp_postmeta.post_id ) LEFT JOIN wp_terms ON (wp_term_relationships.term_taxonomy_id = wp_terms.term_id) LEFT JOIN wp_postmeta wp_rd ON wp_rd.post_id = wp_posts.ID AND wp_rd.meta_key = 'meta_value'";
+          $subtype = $_GET['wp-type-contacts-subtype'];
+          $pieces['where'] .= " AND wp_term_relationships.term_taxonomy_id = (SELECT term_id FROM wp_terms WHERE slug = '$subtype' )";
+        } elseif ( ( isset( $_GET['wp-type-group'] ) && $_GET['wp-type-group'] != '' ) && 'wp-type-contacts' == $_GET['post_type'] && ( ( isset( $_GET['wp-type-contacts-subtype'] ) && $_GET['wp-type-contacts-subtype'] == '' ) && ( isset( $_GET['wp-type-tags'] ) && $_GET['wp-type-tags'] == '' ) ) || ( !isset( $_GET['wp-type-contacts-subtype'] ) && !isset( $_GET['wp-type-group'] ) ) ) {
+          $group = $_GET['wp-type-group'];
+          $pieces['join'] = " LEFT JOIN wp_term_relationships ON (wp_posts.ID = wp_term_relationships.object_id) LEFT JOIN wp_postmeta ON ( wp_posts.ID = wp_postmeta.post_id ) LEFT JOIN wp_terms ON (wp_term_relationships.term_taxonomy_id = wp_terms.term_id) LEFT JOIN wp_postmeta wp_rd ON wp_rd.post_id = wp_posts.ID AND wp_rd.meta_key = 'meta_value'";
+          $pieces['where'] .= " AND wp_term_relationships.term_taxonomy_id = (SELECT term_id FROM wp_terms WHERE slug = '$group')";
+        } elseif ( ( isset( $_GET['wp-type-tags'] ) && $_GET['wp-type-tags'] != '' ) && 'wp-type-contacts' == $_GET['post_type'] && ( ( isset( $_GET['wp-type-group'] ) && $_GET['wp-type-group'] == '' ) && ( isset( $_GET['wp-type-contacts-subtype'] ) && $_GET['wp-type-contacts-subtype'] == '' ) ) || ( !isset( $_GET['wp-type-contacts-subtype'] ) && !isset( $_GET['wp-type-tags'] ) ) ) {
+          $tags = $_GET['wp-type-tags'];
+          $pieces['join'] = " LEFT JOIN wp_term_relationships ON (wp_posts.ID = wp_term_relationships.object_id) LEFT JOIN wp_postmeta ON ( wp_posts.ID = wp_postmeta.post_id ) LEFT JOIN wp_terms ON (wp_term_relationships.term_taxonomy_id = wp_terms.term_id) LEFT JOIN wp_postmeta wp_rd ON wp_rd.post_id = wp_posts.ID AND wp_rd.meta_key = 'meta_value'";
+          $pieces['where'] .= " AND wp_term_relationships.term_taxonomy_id = (SELECT term_id FROM wp_terms WHERE slug = '$tags')";
+        } elseif( ( ( isset( $_GET['wp-type-tags'] ) && $_GET['wp-type-tags'] != '' ) && ( isset( $_GET['wp-type-group'] ) && $_GET['wp-type-group'] != '' ) && ( isset( $_GET['wp-type-contacts-subtype'] ) && $_GET['wp-type-contacts-subtype'] != '' ) ) && 'wp-type-contacts' == $_GET['post_type'] && ( isset( $_GET['filter_action']  ) && $_GET['filter_action'] == 'Filter' ) ) {
+          $tags = $_GET['wp-type-tags'];
+          $group = $_GET['wp-type-group'];
+          $contact_type = $_GET['wp-type-contacts-subtype'];
+          $pieces['join'] = " LEFT JOIN wp_term_relationships ON (wp_posts.ID = wp_term_relationships.object_id) LEFT JOIN wp_term_relationships tags ON (wp_posts.ID = tags.object_id) LEFT JOIN wp_term_relationships tribe ON (wp_posts.ID = tribe.object_id) LEFT JOIN wp_postmeta ON ( wp_posts.ID = wp_postmeta.post_id ) LEFT JOIN wp_terms ON (wp_term_relationships.term_taxonomy_id = wp_terms.term_id) LEFT JOIN wp_postmeta wp_rd ON wp_rd.post_id = wp_posts.ID AND wp_rd.meta_key = 'meta_value'";
+          $pieces['where'] .= " AND wp_term_relationships.term_taxonomy_id = (SELECT term_id FROM wp_terms WHERE slug = '$contact_type') AND tags.term_taxonomy_id = (SELECT term_id FROM wp_terms WHERE slug = '$group') AND tribe.term_taxonomy_id = (SELECT term_id FROM wp_terms WHERE slug = '$tags')";
+        } elseif( ( ( isset( $_GET['wp-type-tags'] ) && $_GET['wp-type-tags'] != '' ) && ( isset( $_GET['wp-type-contacts-subtype'] ) && $_GET['wp-type-contacts-subtype'] != '' ) && ( $_GET['wp-type-group'] == '' && isset( $_GET['wp-type-group'] ) ) ) && 'wp-type-contacts' == $_GET['post_type'] ) {
+          $tags = $_GET['wp-type-tags'];
+          $contact_type = $_GET['wp-type-contacts-subtype'];
+          $pieces['join'] = " LEFT JOIN wp_term_relationships tags ON (wp_posts.ID = tags.object_id) LEFT JOIN wp_term_relationships tribe ON (wp_posts.ID = tribe.object_id) LEFT JOIN wp_postmeta ON ( wp_posts.ID = wp_postmeta.post_id ) LEFT JOIN wp_terms ON (wp_term_relationships.term_taxonomy_id = wp_terms.term_id) LEFT JOIN wp_postmeta wp_rd ON wp_rd.post_id = wp_posts.ID AND wp_rd.meta_key = 'meta_value'";
+          $pieces['where'] .= " AND wp_term_relationships.term_taxonomy_id = (SELECT term_id FROM wp_terms WHERE slug = '$contact_type') AND tags.term_taxonomy_id = (SELECT term_id FROM wp_terms WHERE slug = '$tags')";
+        } elseif( ( ( isset( $_GET['wp-type-group'] ) && $_GET['wp-type-group'] != '' ) && ( isset( $_GET['wp-type-contacts-subtype'] ) && $_GET['wp-type-contacts-subtype'] != '' ) && ( $_GET['wp-type-tags'] == '' && isset( $_GET['wp-type-tags'] ) ) ) && 'wp-type-contacts' == $_GET['post_type'] ) {
+          $group = $_GET['wp-type-group'];
+          $contact_type = $_GET['wp-type-contacts-subtype'];
+          $pieces['join'] = " LEFT JOIN wp_term_relationships type ON (wp_posts.ID = type.object_id) LEFT JOIN wp_term_relationships tribe ON (wp_posts.ID = tribe.object_id) LEFT JOIN wp_postmeta ON ( wp_posts.ID = wp_postmeta.post_id ) LEFT JOIN wp_terms ON (wp_term_relationships.term_taxonomy_id = wp_terms.term_id) LEFT JOIN wp_postmeta wp_rd ON wp_rd.post_id = wp_posts.ID AND wp_rd.meta_key = 'meta_value'";
+          $pieces['where'] .= " AND wp_term_relationships.term_taxonomy_id = (SELECT term_id FROM wp_terms WHERE slug = '$contact_type') AND tribe.term_taxonomy_id = (SELECT term_id FROM wp_terms WHERE slug = '$group')";
+        } elseif( ( ( isset( $_GET['wp-type-tags'] ) && $_GET['wp-type-tags'] != '' ) && ( isset( $_GET['wp-type-group'] ) && $_GET['wp-type-group'] != '' ) && ( $_GET['wp-type-contacts-subtype'] == '' && isset( $_GET['wp-type-contacts-subtype'] ) ) ) && 'wp-type-contacts' == $_GET['post_type'] ) {
+          $tags = $_GET['wp-type-tags'];
+          $group = $_GET['wp-type-group'];
+          $pieces['join'] = " LEFT JOIN wp_term_relationships ON (wp_posts.ID = wp_term_relationships.object_id) LEFT JOIN wp_term_relationships tags ON (wp_posts.ID = tags.object_id) LEFT JOIN wp_postmeta ON ( wp_posts.ID = wp_postmeta.post_id ) LEFT JOIN wp_terms ON (wp_term_relationships.term_taxonomy_id = wp_terms.term_id) LEFT JOIN wp_postmeta wp_rd ON wp_rd.post_id = wp_posts.ID AND wp_rd.meta_key = 'meta_value'";
+          $pieces['where'] .= " AND wp_term_relationships.term_taxonomy_id = (SELECT term_id FROM wp_terms WHERE slug = '$group') AND tags.term_taxonomy_id = (SELECT term_id FROM wp_terms WHERE slug = '$tags')";
+        }
+      }
     }
     return $pieces;
   }
@@ -316,9 +355,9 @@ class UkuuPeople {
         }
       }
     } elseif ( 'edit_ukuupeople' == $cap ) {
-      if ( ( $user_id == $post->post_author && current_user_can('edit_own_ukuupeoples') ) || current_user_can('edit_all_ukuupeoples') || $user_id == 1  )
+      if ( ( $user_id == $post->post_author && current_user_can('edit_own_ukuupeoples') ) || current_user_can('edit_all_ukuupeoples') || $user_id == 1 ) {
         $caps[] = $post_type->cap->edit_posts;
-      else {
+      } else {
         $current_user_email = wp_get_current_user()->user_email;
         $post_author_email = get_post_meta( $args[0], 'wpcf-email', TRUE );
         if ( $current_user_email == $post_author_email && current_user_can('edit_own_ukuupeoples') ) {
