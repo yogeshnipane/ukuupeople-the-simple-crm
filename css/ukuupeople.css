@@ -407,18 +407,9 @@
 
 @media only screen and (max-width: 1024px) {
 
-    .post-type-wp-type-contacts #second-sidebar-contact {
-    width: 49% !important;
-}
-
 .post-type-wp-type-contacts #first-sidebar-contact {
-    width: 50% !important;
+    width: 50% !important;/*408px;*/
 }
-
-.post-type-wp-type-contacts #third-sidebar-contact {
-    width: 97%;
-}
-
 }
 
 /*=====04.03.2015 css start=====*/
