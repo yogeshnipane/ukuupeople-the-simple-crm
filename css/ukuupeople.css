@@ -405,6 +405,22 @@
 
 }
 
+@media only screen and (max-width: 1024px) {
+
+    .post-type-wp-type-contacts #second-sidebar-contact {
+    width: 49% !important;
+}
+
+.post-type-wp-type-contacts #first-sidebar-contact {
+    width: 50% !important;
+}
+
+.post-type-wp-type-contacts #third-sidebar-contact {
+    width: 97%;
+}
+
+}
+
 /*=====04.03.2015 css start=====*/
 
 .plugins_page_ukuupeople-home .wrap {
@@ -677,7 +693,7 @@
     bottom: 2px;
     display: block;
     margin-bottom: 2px;
-	margin-top: 5px;
+	margin-top: 8px;
     min-height: 109px;
     padding: 5px;
     width: 94%;
