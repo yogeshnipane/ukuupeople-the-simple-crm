@@ -112,7 +112,7 @@
 
 #post-body-content #second-sidebar-contact {
     float: left;
-    margin-top: 90px;
+    margin-top: 100px;
     padding-left: 0px;
     width: /*400px;*/50%;
     position:relative;
@@ -120,8 +120,9 @@
 
 #post-body-content #user-images {
     background-color: transparent;
-    float: left;
-    overflow:hidden;
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
 }
 
 #post-body-content #display-name {
@@ -141,7 +142,6 @@
     width: /*308px;*/94%;
     min-height: 155px;
     bottom:0;
-    position:absolute;
 }
 
 #post-body-content #addressblock {
@@ -154,6 +154,10 @@
     display:block;
     padding-top:10px;
     line-height:1.2em;
+}
+
+.post-type-wp-type-contacts #third-sidebar-contact {
+    padding: 8px !important;
 }
 
 #post-body-content #tagblock {
@@ -392,7 +396,7 @@
 }
 
 #post-body-content .add-touchpoint {
-    margin-top:10px;
+    margin-top:3px;
 }
 
 @media only screen and (max-width: 1059px) {
@@ -671,15 +675,13 @@
     background-color: #ffffff;
     border: 1px solid #c0c0c0;
     bottom: 2px;
-    float: left;
-    margin-top: 10px;
+    display: block;
+    margin-bottom: 2px;
+	margin-top: 5px;
     min-height: 109px;
     padding: 5px;
-    position: absolute;
     width: 94%;
-    margin-bottom:2px;
 }
-
 
 .post-type-wp-type-contacts #post-body-content #display-name, .admin_page_view-ukuupeople #post-body-content #display-name{
     float: left;
@@ -692,24 +694,25 @@
 
 .post-type-wp-type-contacts #first-sidebar-contact #display-name {
     height: auto;
-    margin-bottom: 10px;
+    margin-bottom: 0px;
     overflow: hidden;
-    width: 151px;
+    width: 175px;
+}
+
+.ukuu_opportunity_link {
+    margin-top: 4px;
 }
 
 .post-type-wp-type-contacts .display-name {
-    float:left;
-    min-height: 150px;
-    position: relative;
+   display: inline-block;
 }
 
 .post-type-wp-type-contacts .add-touchpoint {
     bottom: 0;
-    position: absolute;
 }
 
 .post-type-wp-type-contacts #first-sidebar-contact .add-touchpoint {
-    position: relative;
+    
 }
 
 .post-type-wp-type-contacts #post-body.columns-2 #postbox-container-1 {
@@ -722,6 +725,10 @@
     width: 66%;
 }
 
+
+.profiledetailsblock {
+    display: block;
+}
 .ukuu-touchpoint-types-filter {
     display: inline;
     padding: 5px;
@@ -737,7 +744,7 @@
 }
 
 .post-type-wp-type-contacts #post-body-content .add-touchpoint .edit_contact {
-    margin-bottom:10px;
+    margin-bottom:4px;
 }
 
 .post-type-wp-type-contacts #activity .activity-datetime {

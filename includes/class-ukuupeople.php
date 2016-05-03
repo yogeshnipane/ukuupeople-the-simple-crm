@@ -2408,7 +2408,7 @@ class UkuuPeople {
 
         $contactdetailsblock = array_intersect_key ( $custom, $contactdetails_keys ) ;
         $ctags = wp_get_post_terms($edit->ID, 'wp-type-tags', array("fields" => "names"));
-        echo '<div id="first-sidebar-contact"> <div id="user-images">';
+        echo '<div class="sidebar-contact"><div id="first-sidebar-contact"> <div class="profiledetailsblock"><div id="user-images">';
         if ( ! empty( $custom['wpcf-contactimage'][0] ) ) {
           echo "<img src='".$custom['wpcf-contactimage'][0]."' width='150' height='150'>";
         } else {
@@ -2422,9 +2422,9 @@ class UkuuPeople {
         echo '<input type="hidden" name="star-ajax-nonce" id="star-ajax-nonce" value="' . wp_create_nonce( 'star-ajax-nonce' ) . '" />';
         if ( $posts && in_array( $edit->ID, $posts ) ) {
           $action = "del";
-          echo "<div class='remove_fav_star' style='float:left;'><div id='fav-star' class='remove-star' onclick=\"addToFav($edit->ID, '{$action}');\"></div></div>";
+          echo "<div class='remove_fav_star' style='display:inline-block;vertical-align:top;'><div id='fav-star' class='remove-star' onclick=\"addToFav($edit->ID, '{$action}');\"></div></div>";
         } else {
-          echo "<div class='add_to_fav_star' style='float:left;'><div id='fav-star' class='add-star' onclick=\"addToFav($edit->ID, '{$action}');\" /></div></div>";
+          echo "<div class='add_to_fav_star' style='display:inline-block;vertical-align:top;'><div id='fav-star' class='add-star' onclick=\"addToFav($edit->ID, '{$action}');\" /></div></div>";
         }
 
         echo '<div class="display-name"><div id="display-name">';
@@ -2444,7 +2444,7 @@ class UkuuPeople {
         $contact_id = get_the_ID();
         echo "<div class='edit_contact'><a href='#wpcf-group-edit-contact-info' class='button button-primary'>Edit Contact</a></div>";
         echo "<div><a href='".admin_url()."post-new.php?post_type=wp-type-activity&cid=$contact_id' class='button button-primary'>Add Touchpoints</a></div>";
-        echo '</div></div>';
+        echo '</div></div></div>';
         echo '<div id="contactdetailsblock"><table id="contactdetail-table">';
 
         if ( isset( $custom['wpcf-email'] ) ) {
@@ -2497,6 +2497,7 @@ class UkuuPeople {
         $html .= "<td><p class='title-value'>$tags</p></td></tr></table>";
         echo $html.'</div></div>';
         do_action( 'tab_info' , $edit ,$type[0]->slug );
+        echo '</div>';
         $this->ukuu_activity_list_meta_box();
       }
     }
